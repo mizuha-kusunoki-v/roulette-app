@@ -1,0 +1,58 @@
+############################
+# 共通
+############################
+.DS_Store
+Thumbs.db
+*.log
+
+############################
+# Node.js / Frontend
+############################
+# 依存関係
+node_modules/
+
+# ビルド成果物
+dist/
+build/
+
+# npm / yarn / pnpm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+############################
+# Python / Backend
+############################
+# 仮想環境
+.venv/
+venv/
+env/
+
+# Python キャッシュ
+__pycache__/
+*.py[cod]
+
+# テスト / カバレッジ
+.pytest_cache/
+.coverage
+htmlcov/
+
+############################
+# FastAPI / Uvicorn
+############################
+uvicorn.log
+
+############################
+# IDE / Editor
+############################
+.vscode/
+.idea/
+*.swp
+*.swo
+
+############################
+# 環境変数
+############################
+.env
+.env.*

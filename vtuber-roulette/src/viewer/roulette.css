@@ -1,0 +1,132 @@
+.roulette-container {
+  position: relative;
+  width: 420px;
+  height: 420px;
+  margin: auto;
+}
+
+.roulette-pointer {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 36px;
+  color: #e53935;
+  z-index: 10;
+}
+
+.roulette-wheel {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 6px solid #333;
+  transition: transform 3s cubic-bezier(0.1, 0.8, 0.1, 1);
+}
+
+/* 名前 */
+.roulette-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  font-size: 16px;
+  font-weight: bold;
+  white-space: nowrap;
+  color: white;
+  transform-origin: center center;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+}
+
+/* 非アクティブ */
+.roulette-label.inactive {
+  opacity: 0.25;
+}
+
+/* 次回確定枠 */
+.roulette-label.guaranteed {
+  color: #00e5ff;
+  text-shadow: 0 0 6px #00e5ff, 0 0 12px #00e5ff;
+}
+
+.roulette-label.guaranteed::after {
+  content: "★";
+  margin-left: 4px;
+}
+
+/* 当選フラッシュ */
+@keyframes winner-flash {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.2);
+    filter: brightness(1.8);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+.roulette-label.winner {
+  animation: winner-flash 0.8s ease-out;
+  text-shadow: 0 0 12px gold, 0 0 24px gold;
+}
+
+.viewer-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;     /* ✅ 横方向中央寄せ */
+  justify-content: center;
+  gap: 24px;
+}
+
+/* ===== 抽選結果パネル ===== */
+
+.result-panel {
+  background: rgba(255, 255, 255, 0.95);
+  color: #222;
+  padding: 28px 36px;
+  border-radius: 16px;
+  min-width: 360px;
+  max-width: 520px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  text-align: center;
+}
+
+.result-title {
+  margin-bottom: 16px;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+/* チーム表示 */
+.result-team {
+  font-size: 22px;
+  font-weight: bold;
+  margin: 8px 0;
+}
+
+.result-team.team-a {
+  color: #1e88e5; /* 青 */
+}
+
+.result-team.team-b {
+  color: #e53935; /* 赤 */
+}
+
+/* 補足情報 */
+.result-sub {
+  margin-top: 20px;
+}
+
+.result-sub h3 {
+  margin-bottom: 6px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.result-sub p {
+  font-size: 16px;
+  opacity: 0.85;
+}
