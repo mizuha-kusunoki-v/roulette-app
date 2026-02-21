@@ -5,14 +5,14 @@ export type RouletteResult = {
 
 export type RouletteState = {
   participants: string[];
+  forced_players: string[];
+  auto_forced_players: string[];
+  participation_counts: Record<string, number>;
   prev_players: string[];
   last_players: string[];
   miss_counts: Record<string, number>;
+  last_selection_reasons: Record<string, string>;
   result: RouletteResult | null;
-
-  // ★ 追加：抽選ラウンドID（毎回変わる）
   round_id: string | null;
-
-  // ★ Backend と完全一致（時間概念なし）
   phase: "idle" | "result";
 };

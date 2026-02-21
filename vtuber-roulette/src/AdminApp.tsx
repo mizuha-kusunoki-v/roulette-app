@@ -24,17 +24,17 @@ const AdminApp = () => {
 
   return (
     <div>
-      <h1>🎲 ルーレット管理画面</h1>
+      <h1>Roulette Admin</h1>
 
       <ParticipantManager
         participants={state.participants}
+        forcedPlayers={state.forced_players}
+        autoForcedPlayers={state.auto_forced_players}
+        participationCounts={state.participation_counts}
         onUpdated={reload}
       />
 
-      <RouletteController
-        onResult={setResult}
-        onUpdated={reload}
-      />
+      <RouletteController onResult={setResult} onUpdated={reload} />
 
       <RouletteDisplay result={result} />
       <MatchInfo state={state} />

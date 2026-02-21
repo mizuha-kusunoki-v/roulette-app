@@ -1,4 +1,4 @@
-import { RouletteState, RouletteResult } from "../types";
+import { RouletteState } from "../types";
 
 const BASE_URL = "http://localhost:8000";
 
@@ -15,6 +15,14 @@ export async function updateParticipants(participants: string[]) {
   });
 }
 
+export async function updateForcedPlayers(forcedPlayers: string[]) {
+  await fetch(`${BASE_URL}/forced_players`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ forced_players: forcedPlayers }),
+  });
+}
+
 export async function draw(count: number) {
   const res = await fetch(`${BASE_URL}/draw`, {
     method: "POST",
@@ -23,7 +31,5 @@ export async function draw(count: number) {
   });
 
   const data = await res.json();
-
-  // ★ 管理画面では「result」だけ使う
   return data.result;
 }
