@@ -20,6 +20,7 @@ export type RouletteState = {
   participants: string[];
   organizer_mode: OrganizerMode;
   organizers: string[];
+  selected_organizer_index: number;
   forced_players: string[];
   auto_forced_players: string[];
   excluded_players: string[];

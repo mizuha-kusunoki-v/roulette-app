@@ -30,11 +30,19 @@ export async function updateParticipants(participants: string[]) {
   await ensureOk(res);
 }
 
-export async function updateOrganizerConfig(organizerMode: OrganizerMode, organizers: string[]) {
+export async function updateOrganizerConfig(
+  organizerMode: OrganizerMode,
+  organizers: string[],
+  selectedOrganizerIndex: number,
+) {
   const res = await fetch(`${BASE_URL}/organizer_config`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ organizer_mode: organizerMode, organizers }),
+    body: JSON.stringify({
+      organizer_mode: organizerMode,
+      organizers,
+      selected_organizer_index: selectedOrganizerIndex,
+    }),
   });
   await ensureOk(res);
 }

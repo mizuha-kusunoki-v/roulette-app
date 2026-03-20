@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { notifyPresentationComplete } from "../api/client";
 import { RouletteState } from "../types";
+import { getActiveOrganizers } from "../utils/resultDisplay";
 import { CanvasRoulette } from "./CanvasRoulette";
 import "./roulette.css";
 
@@ -47,7 +48,13 @@ export const RouletteViewerPage = () => {
     lastRoundIdRef.current = serverState.round_id;
     setSpinOrder(serverState.spin_order);
 
-    const organizerSet = new Set(serverState.organizers);
+    const organizerSet = new Set(
+      getActiveOrganizers(
+        serverState.organizer_mode,
+        serverState.organizers,
+        serverState.selected_organizer_index,
+      )
+    );
     const normalPool = serverState.participants.filter(
       (player) => !organizerSet.has(player) && !serverState.prev_players.includes(player)
     );

@@ -43,6 +43,7 @@ class RouletteState(BaseModel):
     participants: List[str] = []
     organizer_mode: OrganizerMode = "single"
     organizers: List[str] = []
+    selected_organizer_index: int = 0
     forced_players: List[str] = []
     auto_forced_players: List[str] = []
     excluded_players: List[str] = []
@@ -67,6 +68,7 @@ class ParticipantsRequest(BaseModel):
 class OrganizerConfigRequest(BaseModel):
     organizer_mode: OrganizerMode
     organizers: List[str]
+    selected_organizer_index: int = 0
 
 
 class ForcedPlayersRequest(BaseModel):
@@ -101,8 +103,21 @@ def sanitize_names(names: List[str], limit: int) -> List[str]:
     return unique
 
 
+def active_organizers() -> List[str]:
+    if state.organizer_mode == "double":
+        return state.organizers[:2]
+
+    if not state.organizers:
+        return []
+
+    index = state.selected_organizer_index
+    if index < 0 or index >= len(state.organizers):
+        index = 0
+    return [state.organizers[index]]
+
+
 def organizer_set() -> set[str]:
-    return set(state.organizers)
+    return set(active_organizers())
 
 
 def compute_auto_forced_players(
@@ -144,7 +159,7 @@ def validate_draw_mode(mode: DrawMode):
     if state.organizer_mode == "double" and mode not in ("hosts_vs_duo", "hosts_split_pairs"):
         raise HTTPException(status_code=400, detail="double organizer mode supports only 2-player draws")
 
-    if state.organizer_mode == "double" and len(state.organizers) < 2:
+    if state.organizer_mode == "double" and len(active_organizers()) < 2:
         raise HTTPException(status_code=400, detail="two organizers are required")
 
 
@@ -205,10 +220,12 @@ def select_players(count: int):
 
 
 def build_result(mode: DrawMode, spin_order: List[str]) -> RouletteResult:
+    current_organizers = active_organizers()
+
     if mode == "standard_3":
         team_a_players = [spin_order[0]]
-        if state.organizer_mode == "single" and state.organizers:
-            team_a_players = [state.organizers[0], spin_order[0]]
+        if current_organizers:
+            team_a_players = [current_organizers[0], spin_order[0]]
 
         return RouletteResult(
             kind=mode,
@@ -231,7 +248,7 @@ def build_result(mode: DrawMode, spin_order: List[str]) -> RouletteResult:
         return RouletteResult(
             kind=mode,
             teams=[
-                ResultTeam(label="主催チーム", players=state.organizers[:2]),
+                ResultTeam(label="主催チーム", players=current_organizers[:2]),
                 ResultTeam(label="挑戦者チーム", players=spin_order[:2]),
             ],
         )
@@ -239,8 +256,8 @@ def build_result(mode: DrawMode, spin_order: List[str]) -> RouletteResult:
     return RouletteResult(
         kind=mode,
         teams=[
-            ResultTeam(label=f"{state.organizers[0]} チーム", players=[state.organizers[0], spin_order[0]]),
-            ResultTeam(label=f"{state.organizers[1]} チーム", players=[state.organizers[1], spin_order[1]]),
+            ResultTeam(label=f"{current_organizers[0]} チーム", players=[current_organizers[0], spin_order[0]]),
+            ResultTeam(label=f"{current_organizers[1]} チーム", players=[current_organizers[1], spin_order[1]]),
         ],
     )
 
@@ -299,9 +316,9 @@ def set_participants(req: ParticipantsRequest):
 
 @app.post("/organizer_config")
 def set_organizer_config(req: OrganizerConfigRequest):
-    limit = 1 if req.organizer_mode == "single" else 2
     state.organizer_mode = req.organizer_mode
-    state.organizers = sanitize_names(req.organizers, limit=limit)
+    state.organizers = sanitize_names(req.organizers, limit=2)
+    state.selected_organizer_index = 1 if req.selected_organizer_index == 1 and len(state.organizers) > 1 else 0
 
     organizers = organizer_set()
     state.forced_players = [p for p in state.forced_players if p not in organizers][:2]

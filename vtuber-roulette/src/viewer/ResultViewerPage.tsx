@@ -37,7 +37,12 @@ export const ResultViewerPage = () => {
     );
   }
 
-  const teams = getDisplayTeams(serverState.result, serverState.organizers);
+  const teams = getDisplayTeams(
+    serverState.result,
+    serverState.organizers,
+    serverState.organizer_mode,
+    serverState.selected_organizer_index,
+  );
 
   return (
     <div className="viewer-screen viewer-center">

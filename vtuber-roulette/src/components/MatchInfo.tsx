@@ -1,4 +1,5 @@
 import { RouletteState } from "../types";
+import { getActiveOrganizers } from "../utils/resultDisplay";
 
 const REASON_LABEL: Record<string, string> = {
   manual_check: "手動強制",
@@ -22,13 +23,22 @@ export const MatchInfo = ({ state }: { state: RouletteState }) => {
     {} as Record<string, string[]>
   );
 
+  const activeOrganizers = getActiveOrganizers(
+    state.organizer_mode,
+    state.organizers,
+    state.selected_organizer_index,
+  );
+
   return (
     <div>
       <h3>主催モード</h3>
       <p>
         {state.organizer_mode === "single" ? "主催1人" : "主催2人"}
-        {state.organizers.length > 0 ? `: ${state.organizers.join(", ")}` : ""}
+        {activeOrganizers.length > 0 ? `: ${activeOrganizers.join(", ")}` : ""}
       </p>
+
+      <h3>入力済み主催名</h3>
+      <p>{state.organizers.length > 0 ? state.organizers.join(", ") : "なし"}</p>
 
       <h3>前回参加者</h3>
       <p>{state.prev_players.length ? state.prev_players.join(", ") : "なし"}</p>

@@ -5,6 +5,7 @@ import { OrganizerMode } from "../types";
 interface Props {
   organizerMode: OrganizerMode;
   organizers: string[];
+  selectedOrganizerIndex: number;
   disabled: boolean;
   onUpdated: () => void;
 }
@@ -12,6 +13,7 @@ interface Props {
 export const OrganizerSettings = ({
   organizerMode,
   organizers,
+  selectedOrganizerIndex,
   disabled,
   onUpdated,
 }: Props) => {
@@ -21,6 +23,7 @@ export const OrganizerSettings = ({
   const [mode, setMode] = useState<OrganizerMode>(organizerMode);
   const [host1, setHost1] = useState(organizer1);
   const [host2, setHost2] = useState(organizer2);
+  const [selectedIndex, setSelectedIndex] = useState(selectedOrganizerIndex === 1 ? 1 : 0);
 
   useEffect(() => {
     setMode(organizerMode);
@@ -34,9 +37,15 @@ export const OrganizerSettings = ({
     setHost2(organizer2);
   }, [organizer2]);
 
+  useEffect(() => {
+    setSelectedIndex(selectedOrganizerIndex === 1 ? 1 : 0);
+  }, [selectedOrganizerIndex]);
+
+  const hasTwoHosts = host1.trim() !== "" && host2.trim() !== "";
+  const selectionDisabled = disabled || mode === "double" || !hasTwoHosts;
+
   const save = async () => {
-    const names = mode === "double" ? [host1, host2] : [host1];
-    await updateOrganizerConfig(mode, names);
+    await updateOrganizerConfig(mode, [host1, host2], selectedIndex);
     await onUpdated();
   };
 
@@ -72,17 +81,43 @@ export const OrganizerSettings = ({
           placeholder="主催1の名前"
           disabled={disabled}
         />
+        {" "}
+        <label>
+          <input
+            type="checkbox"
+            checked={selectedIndex === 0}
+            disabled={selectionDisabled}
+            onChange={() => setSelectedIndex(0)}
+          />
+          1人主催で採用
+        </label>
       </div>
 
-      {mode === "double" && (
-        <div>
+      <div>
+        <input
+          value={host2}
+          onChange={(e) => setHost2(e.target.value)}
+          placeholder="主催2の名前"
+          disabled={disabled}
+        />
+        {" "}
+        <label>
           <input
-            value={host2}
-            onChange={(e) => setHost2(e.target.value)}
-            placeholder="主催2の名前"
-            disabled={disabled}
+            type="checkbox"
+            checked={selectedIndex === 1}
+            disabled={selectionDisabled}
+            onChange={() => setSelectedIndex(1)}
           />
-        </div>
+          1人主催で採用
+        </label>
+      </div>
+
+      {!hasTwoHosts && mode === "single" && (
+        <p>主催名が2人分入力されたときだけ、採用する主催を切り替えられます。</p>
+      )}
+
+      {mode === "double" && (
+        <p>主催2人モードでは入力済みの2人をそのまま主催として使用します。</p>
       )}
 
       <button onClick={save} disabled={disabled}>

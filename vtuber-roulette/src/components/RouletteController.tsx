@@ -48,7 +48,7 @@ export const RouletteController = ({
           <button onClick={() => exec("hosts_split_pairs")} disabled={hostDrawDisabled}>
             主催別チームのペア抽選
           </button>
-          {!hasTwoHosts && <p>主催2人モードでは主催名を2人分保存してください。</p>}
+          {!hasTwoHosts && <p>主催2人モードでは主催名を2人分入力してください。</p>}
         </>
       )}
     </div>

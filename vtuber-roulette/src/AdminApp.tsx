@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchState, resetState } from "./api/client";
-import { RouletteState, RouletteResult } from "./types";
+import { RouletteResult, RouletteState } from "./types";
 import { MatchInfo } from "./components/MatchInfo";
 import { OrganizerSettings } from "./components/OrganizerSettings";
 import { ParticipantManager } from "./components/ParticipantManager";
@@ -50,6 +50,7 @@ const AdminApp = () => {
       <OrganizerSettings
         organizerMode={state.organizer_mode}
         organizers={state.organizers}
+        selectedOrganizerIndex={state.selected_organizer_index}
         disabled={isLocked}
         onUpdated={reload}
       />
@@ -74,7 +75,12 @@ const AdminApp = () => {
         リセット
       </button>
 
-      <RouletteDisplay result={result} organizers={state.organizers} />
+      <RouletteDisplay
+        result={result}
+        organizers={state.organizers}
+        organizerMode={state.organizer_mode}
+        selectedOrganizerIndex={state.selected_organizer_index}
+      />
       <MatchInfo state={state} />
     </div>
   );
