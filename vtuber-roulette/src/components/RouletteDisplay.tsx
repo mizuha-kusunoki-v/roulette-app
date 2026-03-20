@@ -1,13 +1,25 @@
 import { RouletteResult } from "../types";
+import { getDisplayTeams } from "../utils/resultDisplay";
 
-export const RouletteDisplay = ({ result }: { result: RouletteResult | null }) => {
+export const RouletteDisplay = ({
+  result,
+  organizers = [],
+}: {
+  result: RouletteResult | null;
+  organizers?: string[];
+}) => {
   if (!result) return <p>抽選結果はまだありません。</p>;
+
+  const teams = getDisplayTeams(result, organizers);
 
   return (
     <div>
       <h2>抽選結果</h2>
-      <p>チームA: {result.teamA.join(", ")}</p>
-      <p>チームB: {result.teamB.join(", ")}</p>
+      {teams.map((team) => (
+        <p key={team.label}>
+          {team.label}: {team.players.join(", ")}
+        </p>
+      ))}
     </div>
   );
 };

@@ -1,19 +1,35 @@
+export type OrganizerMode = "single" | "double";
+
+export type DrawMode =
+  | "standard_3"
+  | "standard_4"
+  | "hosts_vs_duo"
+  | "hosts_split_pairs";
+
+export type RouletteResultTeam = {
+  label: string;
+  players: string[];
+};
+
 export type RouletteResult = {
-  teamA: string[];
-  teamB: string[];
+  kind: DrawMode;
+  teams: RouletteResultTeam[];
 };
 
 export type RouletteState = {
   participants: string[];
+  organizer_mode: OrganizerMode;
+  organizers: string[];
   forced_players: string[];
   auto_forced_players: string[];
   excluded_players: string[];
   participation_counts: Record<string, number>;
   prev_players: string[];
   last_players: string[];
+  spin_order: string[];
   miss_counts: Record<string, number>;
   last_selection_reasons: Record<string, string>;
   result: RouletteResult | null;
   round_id: string | null;
-  phase: "idle" | "result";
+  phase: "idle" | "spinning" | "result";
 };

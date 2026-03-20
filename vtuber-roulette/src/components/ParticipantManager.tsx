@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { updateForcedPlayers, updateExcludedPlayers, updateParticipants } from "../api/client";
+import { updateExcludedPlayers, updateForcedPlayers, updateParticipants } from "../api/client";
 
 interface Props {
   participants: string[];
@@ -21,8 +21,9 @@ export const ParticipantManager = ({
   const [name, setName] = useState("");
 
   const add = async () => {
-    if (!name || participants.includes(name)) return;
-    await updateParticipants([...participants, name]);
+    const trimmed = name.trim();
+    if (!trimmed || participants.includes(trimmed)) return;
+    await updateParticipants([...participants, trimmed]);
     setName("");
     onUpdated();
   };
@@ -61,35 +62,41 @@ export const ParticipantManager = ({
   return (
     <div>
       <h2>参加者管理</h2>
-      <input value={name} onChange={(e) => setName(e.target.value)} />
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="参加者名を入力"
+      />
       <button onClick={add}>追加</button>
 
       <ul>
-        {participants.map((p) => {
-          const checkedForced = forcedPlayers.includes(p);
+        {participants.map((player) => {
+          const checkedForced = forcedPlayers.includes(player);
           const disabledForced = !checkedForced && forcedPlayers.length >= 2;
-          const checkedExcluded = excludedPlayers.includes(p);
+          const checkedExcluded = excludedPlayers.includes(player);
 
           return (
-            <li key={p}>
+            <li key={player}>
               <input
                 type="checkbox"
                 checked={checkedForced}
                 disabled={disabledForced}
-                onChange={() => toggleForced(p)}
+                onChange={() => toggleForced(player)}
               />{" "}
-              強制{" "}
+              強制
+              {" "}
               <input
                 type="checkbox"
                 checked={checkedExcluded}
-                onChange={() => toggleExcluded(p)}
+                onChange={() => toggleExcluded(player)}
               />{" "}
-              除外{" "}
-              {p} (参加回数: {participationCounts[p] ?? 0}){" "}
-              {autoForcedPlayers.includes(p) && <span>[自動強制対象]</span>}{" "}
+              除外
+              {" "}
+              {player} (参加回数: {participationCounts[player] ?? 0}){" "}
+              {autoForcedPlayers.includes(player) && <span>[自動強制対象]</span>}{" "}
               {checkedForced && <span>[手動強制]</span>}{" "}
-              {checkedExcluded && <span>[除外]</span>}{" "}
-              <button onClick={() => remove(p)}>削除</button>
+              {checkedExcluded && <span>[除外中]</span>}{" "}
+              <button onClick={() => remove(player)}>削除</button>
             </li>
           );
         })}

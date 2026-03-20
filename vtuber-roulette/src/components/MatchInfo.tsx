@@ -1,17 +1,17 @@
 import { RouletteState } from "../types";
 
 const REASON_LABEL: Record<string, string> = {
-  manual_check: "手動チェック",
-  miss_3: "3回連続未抽選",
-  median_gap: "中央値乖離",
-  random: "通常抽選",
-  exception_prev_round: "人数不足時の前回参加者補充",
+  manual_check: "手動強制",
+  miss_3: "3回連続未選出",
+  median_gap: "中央値差による救済",
+  random: "ランダム抽選",
+  exception_prev_round: "前回参加者からの例外補充",
 };
 
 export const MatchInfo = ({ state }: { state: RouletteState }) => {
   const guaranteed = Object.entries(state.miss_counts)
-    .filter(([_, c]) => c >= 3)
-    .map(([n]) => n);
+    .filter(([_, count]) => count >= 3)
+    .map(([name]) => name);
 
   const grouped = Object.entries(state.last_selection_reasons).reduce(
     (acc, [name, reason]) => {
@@ -24,13 +24,19 @@ export const MatchInfo = ({ state }: { state: RouletteState }) => {
 
   return (
     <div>
+      <h3>主催モード</h3>
+      <p>
+        {state.organizer_mode === "single" ? "主催1人" : "主催2人"}
+        {state.organizers.length > 0 ? `: ${state.organizers.join(", ")}` : ""}
+      </p>
+
       <h3>前回参加者</h3>
       <p>{state.prev_players.length ? state.prev_players.join(", ") : "なし"}</p>
 
-      <h3>次回の強制抽選候補（3回連続未抽選）</h3>
+      <h3>次回の優先対象（3回連続未選出）</h3>
       <p>{guaranteed.length ? guaranteed.join(", ") : "なし"}</p>
 
-      <h3>自動強制対象（参加回数の中央値乖離）</h3>
+      <h3>自動強制対象（参加回数の中央値差）</h3>
       <p>{state.auto_forced_players.length ? state.auto_forced_players.join(", ") : "なし"}</p>
 
       <h3>直近抽選の内訳</h3>

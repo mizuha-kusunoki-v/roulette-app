@@ -5,6 +5,40 @@
   margin: auto;
 }
 
+.viewer-screen {
+  width: 100%;
+  min-height: 100vh;
+  background: transparent;
+}
+
+.viewer-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.status-panel {
+  padding: 24px 32px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #222;
+  font-size: 40px;
+  font-weight: 700;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.roulette-status {
+  margin: 0;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+}
+
 .roulette-pointer {
   position: absolute;
   top: -8px;
