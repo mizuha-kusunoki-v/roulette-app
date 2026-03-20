@@ -28,6 +28,7 @@ class RouletteState(BaseModel):
     participants: List[str] = []
     forced_players: List[str] = []
     auto_forced_players: List[str] = []
+    excluded_players: List[str] = []
     participation_counts: Dict[str, int] = {}
     prev_players: List[str] = []
     last_players: List[str] = []
@@ -47,6 +48,10 @@ class ParticipantsRequest(BaseModel):
 
 class ForcedPlayersRequest(BaseModel):
     forced_players: List[str]
+
+
+class ExcludedPlayersRequest(BaseModel):
+    excluded_players: List[str]
 
 
 class DrawRequest(BaseModel):
@@ -90,6 +95,7 @@ def set_participants(req: ParticipantsRequest):
     state.participants = req.participants
 
     state.forced_players = [p for p in state.forced_players if p in state.participants][:2]
+    state.excluded_players = [p for p in state.excluded_players if p in state.participants]
     state.last_players = [p for p in state.last_players if p in state.participants]
     state.miss_counts = {p: state.miss_counts.get(p, 0) for p in state.participants}
     state.participation_counts = {p: state.participation_counts.get(p, 0) for p in state.participants}
@@ -106,6 +112,18 @@ def set_forced_players(req: ForcedPlayersRequest):
             unique.append(p)
 
     state.forced_players = unique[:2]
+    state.auto_forced_players = compute_auto_forced_players(state.forced_players)
+    return {"ok": True}
+
+
+@app.post("/excluded_players")
+def set_excluded_players(req: ExcludedPlayersRequest):
+    unique: List[str] = []
+    for p in req.excluded_players:
+        if p in state.participants and p not in unique:
+            unique.append(p)
+
+    state.excluded_players = unique
     state.auto_forced_players = compute_auto_forced_players(state.forced_players)
     return {"ok": True}
 
@@ -129,7 +147,7 @@ def draw(req: DrawRequest):
     selected = append_with_reason(manual_forced, "manual_check", count)
 
     # 2) non-checked players in last round are excluded for normal selection
-    available = [p for p in state.participants if p not in state.last_players and p not in selected]
+    available = [p for p in state.participants if p not in state.last_players and p not in selected and p not in state.excluded_players]
 
     # 3) prioritize 3+ misses
     guaranteed = [p for p in available if state.miss_counts.get(p, 0) >= 3]

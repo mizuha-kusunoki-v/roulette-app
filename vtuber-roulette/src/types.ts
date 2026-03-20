@@ -7,6 +7,7 @@ export type RouletteState = {
   participants: string[];
   forced_players: string[];
   auto_forced_players: string[];
+  excluded_players: string[];
   participation_counts: Record<string, number>;
   prev_players: string[];
   last_players: string[];

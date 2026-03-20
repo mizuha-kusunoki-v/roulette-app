@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { updateForcedPlayers, updateParticipants } from "../api/client";
+import { updateForcedPlayers, updateExcludedPlayers, updateParticipants } from "../api/client";
 
 interface Props {
   participants: string[];
   forcedPlayers: string[];
   autoForcedPlayers: string[];
+  excludedPlayers: string[];
   participationCounts: Record<string, number>;
   onUpdated: () => void;
 }
@@ -13,6 +14,7 @@ export const ParticipantManager = ({
   participants,
   forcedPlayers,
   autoForcedPlayers,
+  excludedPlayers,
   participationCounts,
   onUpdated,
 }: Props) => {
@@ -44,6 +46,18 @@ export const ParticipantManager = ({
     onUpdated();
   };
 
+  const toggleExcluded = async (target: string) => {
+    const exists = excludedPlayers.includes(target);
+    if (exists) {
+      await updateExcludedPlayers(excludedPlayers.filter((p) => p !== target));
+      onUpdated();
+      return;
+    }
+
+    await updateExcludedPlayers([...excludedPlayers, target]);
+    onUpdated();
+  };
+
   return (
     <div>
       <h2>参加者管理</h2>
@@ -52,20 +66,29 @@ export const ParticipantManager = ({
 
       <ul>
         {participants.map((p) => {
-          const checked = forcedPlayers.includes(p);
-          const disabled = !checked && forcedPlayers.length >= 2;
+          const checkedForced = forcedPlayers.includes(p);
+          const disabledForced = !checkedForced && forcedPlayers.length >= 2;
+          const checkedExcluded = excludedPlayers.includes(p);
 
           return (
             <li key={p}>
               <input
                 type="checkbox"
-                checked={checked}
-                disabled={disabled}
+                checked={checkedForced}
+                disabled={disabledForced}
                 onChange={() => toggleForced(p)}
               />{" "}
+              強制{" "}
+              <input
+                type="checkbox"
+                checked={checkedExcluded}
+                onChange={() => toggleExcluded(p)}
+              />{" "}
+              除外{" "}
               {p} (参加回数: {participationCounts[p] ?? 0}){" "}
               {autoForcedPlayers.includes(p) && <span>[自動強制対象]</span>}{" "}
-              {checked && <span>[手動強制]</span>}{" "}
+              {checkedForced && <span>[手動強制]</span>}{" "}
+              {checkedExcluded && <span>[除外]</span>}{" "}
               <button onClick={() => remove(p)}>削除</button>
             </li>
           );

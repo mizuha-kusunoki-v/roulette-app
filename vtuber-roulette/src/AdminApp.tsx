@@ -30,6 +30,7 @@ const AdminApp = () => {
         participants={state.participants}
         forcedPlayers={state.forced_players}
         autoForcedPlayers={state.auto_forced_players}
+        excludedPlayers={state.excluded_players}
         participationCounts={state.participation_counts}
         onUpdated={reload}
       />

@@ -23,6 +23,14 @@ export async function updateForcedPlayers(forcedPlayers: string[]) {
   });
 }
 
+export async function updateExcludedPlayers(excludedPlayers: string[]) {
+  await fetch(`${BASE_URL}/excluded_players`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ excluded_players: excludedPlayers }),
+  });
+}
+
 export async function draw(count: number) {
   const res = await fetch(`${BASE_URL}/draw`, {
     method: "POST",
