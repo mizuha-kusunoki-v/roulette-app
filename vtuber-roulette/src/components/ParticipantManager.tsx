@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { ChangeEvent, useRef, useState } from "react";
 import { updateExcludedPlayers, updateForcedPlayers, updateParticipants } from "../api/client";
 
 interface Props {
@@ -10,6 +10,25 @@ interface Props {
   onUpdated: () => void;
 }
 
+function parseCsvLines(text: string): string[] {
+  const names: string[] = [];
+
+  text
+    .replace(/^\uFEFF/, "")
+    .split(/\r?\n/)
+    .forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+
+      const unquoted = trimmed.replace(/^"(.*)"$/, "$1").trim();
+      if (unquoted && !names.includes(unquoted)) {
+        names.push(unquoted);
+      }
+    });
+
+  return names;
+}
+
 export const ParticipantManager = ({
   participants,
   forcedPlayers,
@@ -19,10 +38,12 @@ export const ParticipantManager = ({
   onUpdated,
 }: Props) => {
   const [name, setName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const add = async () => {
     const trimmed = name.trim();
     if (!trimmed || participants.includes(trimmed)) return;
+
     await updateParticipants([...participants, trimmed]);
     setName("");
     onUpdated();
@@ -59,6 +80,33 @@ export const ParticipantManager = ({
     onUpdated();
   };
 
+  const handleCsvImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const imported = parseCsvLines(text);
+      await updateParticipants(imported);
+      await onUpdated();
+    } finally {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const exportCsv = () => {
+    const csv = participants.join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "participants.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div>
       <h2>参加者管理</h2>
@@ -68,6 +116,23 @@ export const ParticipantManager = ({
         placeholder="参加者名を入力"
       />
       <button onClick={add}>追加</button>
+
+      <div>
+        <label>
+          CSV取り込み
+          {" "}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,text/csv"
+            onChange={handleCsvImport}
+          />
+        </label>
+        {" "}
+        <button onClick={exportCsv} disabled={participants.length === 0}>
+          CSV書き出し
+        </button>
+      </div>
 
       <ul>
         {participants.map((player) => {
@@ -101,7 +166,7 @@ export const ParticipantManager = ({
           );
         })}
       </ul>
-      <p>手動強制は最大2人まで選択できます。</p>
+      <p>CSV は参加者1人1行で読み書きします。手動強制は最大2人まで選択できます。</p>
     </div>
   );
 };
