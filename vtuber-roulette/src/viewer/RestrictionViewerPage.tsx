@@ -3,8 +3,12 @@ import { restrictionPresentationComplete } from "../api/restrictionClient";
 import { RestrictionState } from "../types";
 import { CanvasRoulette } from "./CanvasRoulette";
 import "./roulette.css";
-import "./restriction-viewer.css";
 
+/**
+ * 縛りルーレット アニメーション専用 Viewer
+ * OBS Browser Source: /viewer/restriction/roulette
+ * spinning フェーズ中のみ表示。アニメーション完了後に presentation_complete を通知する。
+ */
 export const RestrictionViewerPage = () => {
   const [serverState, setServerState] = useState<RestrictionState | null>(null);
   const [uiStatus, setUiStatus] = useState<"idle" | "running">("idle");
@@ -35,57 +39,39 @@ export const RestrictionViewerPage = () => {
     setUiStatus("running");
   }, [serverState, uiStatus]);
 
-  // ---- 待機 / スピン中 ----
-  if (!serverState || serverState.phase === "idle") {
+  if (
+    !serverState ||
+    serverState.phase !== "spinning" ||
+    uiStatus !== "running" ||
+    !serverState.result
+  ) {
     return <div className="viewer-screen" />;
   }
 
-  if (serverState.phase === "spinning" && uiStatus === "running" && serverState.result) {
-    const spinOrder = serverState.spin_order;
-    const winnerName = serverState.result.name;
-    const winnerIdx = spinOrder.indexOf(winnerName);
-    // spin_order に winner が含まれていない場合は末尾にフォールバック
-    const safeIdx = winnerIdx >= 0 ? winnerIdx : spinOrder.length - 1;
-    const safeOrder = winnerIdx >= 0 ? spinOrder : [...spinOrder, winnerName];
+  const spinOrder = serverState.spin_order;
+  const winnerName = serverState.result.name;
+  const winnerIdx = spinOrder.indexOf(winnerName);
+  const safeIdx = winnerIdx >= 0 ? winnerIdx : spinOrder.length - 1;
+  const safeOrder = winnerIdx >= 0 ? spinOrder : [...spinOrder, winnerName];
 
-    return (
-      <div className="viewer-screen viewer-center">
-        <p className="roulette-status">縛りルーレット抽選中...</p>
-        <CanvasRoulette
-          key={serverState.round_id}
-          participants={safeOrder}
-          winnerIndex={safeIdx}
-          onFinish={async () => {
-            setUiStatus("idle");
-            if (
-              serverState.round_id &&
-              completedRoundIdRef.current !== serverState.round_id
-            ) {
-              completedRoundIdRef.current = serverState.round_id;
-              await restrictionPresentationComplete(serverState.round_id);
-            }
-          }}
-        />
-      </div>
-    );
-  }
-
-  // ---- 結果表示 ----
-  if (serverState.phase === "result" && serverState.result) {
-    const { name, description } = serverState.result;
-    const { target } = serverState;
-
-    return (
-      <div className="viewer-screen viewer-center">
-        <div className="rv-result-panel">
-          <p className="rv-result-eyebrow">縛りルール決定！</p>
-          {target && <p className="rv-result-target">{target}</p>}
-          <p className="rv-result-name">{name}</p>
-          {description && <p className="rv-result-desc">{description}</p>}
-        </div>
-      </div>
-    );
-  }
-
-  return <div className="viewer-screen" />;
+  return (
+    <div className="viewer-screen viewer-center">
+      <p className="roulette-status">縛りルーレット抽選中...</p>
+      <CanvasRoulette
+        key={serverState.round_id}
+        participants={safeOrder}
+        winnerIndex={safeIdx}
+        onFinish={async () => {
+          setUiStatus("idle");
+          if (
+            serverState.round_id &&
+            completedRoundIdRef.current !== serverState.round_id
+          ) {
+            completedRoundIdRef.current = serverState.round_id;
+            await restrictionPresentationComplete(serverState.round_id);
+          }
+        }}
+      />
+    </div>
+  );
 };
