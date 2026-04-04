@@ -390,3 +390,154 @@ async def websocket_endpoint(ws: WebSocket):
             await asyncio.sleep(0.1)
     except Exception:
         pass
+
+
+# =============================================================================
+# 縛りルーレット (Restriction Roulette)
+# =============================================================================
+
+
+class RestrictionItem(BaseModel):
+    id: str
+    name: str
+    description: str = ""
+    enabled: bool = True
+    weight: int = 1  # 出現重み 1〜5
+    use_count: int = 0
+
+
+class RestrictionState(BaseModel):
+    items: List[RestrictionItem] = []
+    result: RestrictionItem | None = None
+    target: str = ""                  # 適用対象テキスト (例: "チームA", "全員")
+    phase: Literal["idle", "spinning", "result"] = "idle"
+    round_id: str | None = None
+    history: List[str] = []          # 選択済み item.id の履歴 (新しい順)
+    exclude_recent_count: int = 0    # 直近 N 回を抽選除外 (0=除外なし)
+    spin_order: List[str] = []       # アニメーション用 item.name リスト
+
+
+restriction_state = RestrictionState()
+
+
+class RestrictionItemsRequest(BaseModel):
+    items: List[RestrictionItem]
+
+
+class RestrictionSpinRequest(BaseModel):
+    target: str = ""
+
+
+class RestrictionPresentationCompleteRequest(BaseModel):
+    round_id: str
+
+
+class RestrictionExcludeRecentRequest(BaseModel):
+    exclude_recent_count: int
+
+
+def pick_restriction_item(
+    items: List[RestrictionItem],
+    exclude_ids: set,
+) -> RestrictionItem | None:
+    """有効アイテムから重み付きランダム抽選。除外対象が全てを覆う場合はフォールバック。"""
+    eligible = [i for i in items if i.enabled and i.id not in exclude_ids]
+    if not eligible:
+        # フォールバック：除外ルールを無視して有効アイテム全体から選ぶ
+        eligible = [i for i in items if i.enabled]
+    if not eligible:
+        return None
+    weights = [max(1, i.weight) for i in eligible]
+    return random.choices(eligible, weights=weights, k=1)[0]
+
+
+@app.get("/restriction/state")
+def get_restriction_state():
+    return restriction_state
+
+
+@app.post("/restriction/items")
+def set_restriction_items(req: RestrictionItemsRequest):
+    # 既存の use_count を引き継ぐ
+    existing_counts = {i.id: i.use_count for i in restriction_state.items}
+    for item in req.items:
+        item.use_count = existing_counts.get(item.id, item.use_count)
+    restriction_state.items = req.items
+    return {"ok": True}
+
+
+@app.post("/restriction/spin")
+def restriction_spin(req: RestrictionSpinRequest):
+    if restriction_state.phase == "spinning":
+        raise HTTPException(status_code=400, detail="already spinning")
+
+    exclude_ids: set = set()
+    if restriction_state.exclude_recent_count > 0:
+        exclude_ids = set(restriction_state.history[-restriction_state.exclude_recent_count:])
+
+    selected = pick_restriction_item(restriction_state.items, exclude_ids)
+    if not selected:
+        raise HTTPException(status_code=400, detail="no eligible items")
+
+    # ルーレット盤に並べる名前リスト (有効アイテムのみ・シャッフル済み)
+    eligible_names = [i.name for i in restriction_state.items if i.enabled]
+    random.shuffle(eligible_names)
+    if selected.name not in eligible_names:
+        eligible_names.append(selected.name)
+
+    restriction_state.result = selected.model_copy()
+    restriction_state.target = req.target
+    restriction_state.spin_order = eligible_names
+    restriction_state.round_id = str(uuid.uuid4())
+    restriction_state.phase = "spinning"
+
+    return {"round_id": restriction_state.round_id}
+
+
+@app.post("/restriction/presentation_complete")
+def restriction_presentation_complete(req: RestrictionPresentationCompleteRequest):
+    if req.round_id != restriction_state.round_id:
+        return {"ok": False, "reason": "round_id_mismatch"}
+
+    if restriction_state.result:
+        restriction_state.history.append(restriction_state.result.id)
+        for item in restriction_state.items:
+            if item.id == restriction_state.result.id:
+                item.use_count += 1
+                break
+
+    restriction_state.phase = "result"
+    return {"ok": True}
+
+
+@app.post("/restriction/exclude_recent")
+def set_restriction_exclude_recent(req: RestrictionExcludeRecentRequest):
+    restriction_state.exclude_recent_count = max(0, req.exclude_recent_count)
+    return {"ok": True}
+
+
+@app.post("/restriction/reset")
+def restriction_reset():
+    global restriction_state
+    restriction_state = RestrictionState(
+        items=restriction_state.items,
+        history=restriction_state.history,
+        exclude_recent_count=restriction_state.exclude_recent_count,
+    )
+    return {"ok": True}
+
+
+@app.websocket("/restriction/ws")
+async def restriction_websocket_endpoint(ws: WebSocket):
+    await ws.accept()
+    try:
+        while True:
+            payload = (
+                restriction_state.model_dump()
+                if hasattr(restriction_state, "model_dump")
+                else restriction_state.dict()
+            )
+            await ws.send_json(payload)
+            await asyncio.sleep(0.1)
+    except Exception:
+        pass
