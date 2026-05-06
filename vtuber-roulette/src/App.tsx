@@ -15,7 +15,7 @@ const App = () => {
         <Route path="/viewer" element={<Navigate to="/viewer/result" replace />} />
         <Route path="/viewer/result" element={<ResultViewerPage />} />
         <Route path="/viewer/roulette" element={<RouletteViewerPage />} />
-        <Route path="/viewer/restriction" element={<Navigate to="/viewer/restriction/roulette" replace />} />
+        <Route path="/viewer/restriction/roulette" element={<Navigate to="/viewer/restriction/roulette" replace />} />
         <Route path="/viewer/restriction/roulette" element={<RestrictionViewerPage />} />
         <Route path="/viewer/restriction/result" element={<RestrictionResultViewerPage />} />
       </Routes>
